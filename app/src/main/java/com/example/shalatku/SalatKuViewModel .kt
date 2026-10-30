@@ -23,11 +23,11 @@ class SalatKuViewModel : ViewModel() {
     private val _donePrayers = mutableStateListOf<String>()
     val donePrayers: List<String> get() = _donePrayers
 
-    // --- Home ---
+
     var selectedDay by mutableIntStateOf(0)
         private set
 
-    // --- Fungsi tasbih ---
+
     fun incrementTasbih() {
         tasbihCount++
         if (tasbihCount >= roundSize) {
