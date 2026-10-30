@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 
 class SalatKuViewModel : ViewModel() {
 
-    // --- Tasbih ---
+
     var tasbihCount by mutableIntStateOf(0)
         private set
 
@@ -20,7 +20,6 @@ class SalatKuViewModel : ViewModel() {
     private var _roundSize by mutableIntStateOf(33)
     val roundSize: Int get() = _roundSize
 
-    // --- Tracker ---
     private val _donePrayers = mutableStateListOf<String>()
     val donePrayers: List<String> get() = _donePrayers
 
@@ -44,10 +43,10 @@ class SalatKuViewModel : ViewModel() {
 
     fun setRoundSize(size: Int) {
         _roundSize = size
-        tasbihCount = 0          // count di-reset, rounds tetap
+        tasbihCount = 0
     }
 
-    // --- Fungsi tracker ---
+
     fun togglePrayer(name: String) {
         if (name in _donePrayers) _donePrayers.remove(name) else _donePrayers.add(name)
     }
@@ -56,7 +55,7 @@ class SalatKuViewModel : ViewModel() {
         _donePrayers.clear()
     }
 
-    // --- Fungsi home ---
+
     fun selectDay(index: Int) {
         selectedDay = index
     }

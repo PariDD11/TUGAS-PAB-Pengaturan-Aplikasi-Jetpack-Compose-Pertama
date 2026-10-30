@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ShalatkuApp(viewModel: SalatKuViewModel = viewModel()) {
-    // Tab yang dipilih = UI state, tetap di composable (rule 4)
+
     var selected by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
