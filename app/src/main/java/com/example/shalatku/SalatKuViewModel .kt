@@ -1,62 +1,83 @@
 package com.example.shalatku
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class SalatKuViewModel : ViewModel() {
 
+    private val _uiState = MutableStateFlow(SalatKuUiState())
+    val uiState: StateFlow<SalatKuUiState> = _uiState.asStateFlow()
 
-    var tasbihCount by mutableIntStateOf(0)
-        private set
+    // Penghitung panggilan: bukan UI state, karena tidak ada screen yang membacanya
+    private var loadCount = 0
 
-    var completedRounds by mutableIntStateOf(0)
-        private set
+    // --- Prayer times (HW13) ---
+    fun loadPrayerTimes() {
+        // Kalau sedang Loading, panggilan baru tidak melakukan apa-apa
+        if (_uiState.value.prayerTimes is PrayerTimesUiState.Loading) return
 
-    val roundSizeOptions = listOf(33, 99, 100)
+        _uiState.update { it.copy(prayerTimes = PrayerTimesUiState.Loading) }
 
-    private var _roundSize by mutableIntStateOf(33)
-    val roundSize: Int get() = _roundSize
+        loadCount++
+        val shouldFail = loadCount % 2 == 0   // panggilan ke-2, 4, 6, ... gagal
 
-    private val _donePrayers = mutableStateListOf<String>()
-    val donePrayers: List<String> get() = _donePrayers
+        viewModelScope.launch {
+            delay(1500)
+            _uiState.update {
+                it.copy(
+                    prayerTimes = if (shouldFail) {
+                        PrayerTimesUiState.Error("Gagal memuat jadwal shalat. Coba lagi.")
+                    } else {
+                        PrayerTimesUiState.Success(samplePrayers)
+                    }
+                )
+            }
+        }
+    }
 
+    // --- Tracker ---
+    fun togglePrayer(name: String) {
+        _uiState.update { state ->
+            val done = if (name in state.donePrayers) {
+                state.donePrayers - name
+            } else {
+                state.donePrayers + name
+            }
+            state.copy(donePrayers = done)
+        }
+    }
 
-    var selectedDay by mutableIntStateOf(0)
-        private set
+    fun clearPrayers() {
+        _uiState.update { it.copy(donePrayers = emptyList()) }
+    }
 
+    fun selectDay(index: Int) {
+        _uiState.update { it.copy(selectedDay = index) }
+    }
 
+    // --- Tasbih ---
     fun incrementTasbih() {
-        tasbihCount++
-        if (tasbihCount >= roundSize) {
-            completedRounds++
-            tasbihCount = 0
+        _uiState.update { state ->
+            val next = state.tasbihCount + 1
+            if (next >= state.roundSize) {
+                state.copy(tasbihCount = 0, completedRounds = state.completedRounds + 1)
+            } else {
+                state.copy(tasbihCount = next)
+            }
         }
     }
 
     fun resetTasbih() {
-        tasbihCount = 0
-        completedRounds = 0
+        _uiState.update { it.copy(tasbihCount = 0, completedRounds = 0) }
     }
 
     fun setRoundSize(size: Int) {
-        _roundSize = size
-        tasbihCount = 0
-    }
-
-
-    fun togglePrayer(name: String) {
-        if (name in _donePrayers) _donePrayers.remove(name) else _donePrayers.add(name)
-    }
-
-    fun clearPrayers() {
-        _donePrayers.clear()
-    }
-
-
-    fun selectDay(index: Int) {
-        selectedDay = index
+        _uiState.update { it.copy(roundSize = size, tasbihCount = 0) }
     }
 }
